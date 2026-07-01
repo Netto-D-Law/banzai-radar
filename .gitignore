@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+data/radar.db-wal
+data/radar.db-shm
+.venv/
+venv/
