@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from db.models import init_db, get_conn
 from scraper.tcgplayer import scrape_all
+from analyzer.export_static import export as export_static
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
@@ -60,6 +61,8 @@ def run():
 
     conn.close()
     log.info("=== Coleta concluída: %d snapshots salvos ===", total_saved)
+
+    export_static()
 
 
 if __name__ == "__main__":

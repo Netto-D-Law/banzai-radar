@@ -35,10 +35,10 @@ jobs:
 
       # Persiste o banco atualizado direto no repositório —
       # mais confiável que cache do Actions (que pode expirar)
-      - name: Salvar banco de dados atualizado
+      - name: Salvar banco de dados e dashboard público atualizados
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Banzai Radar Bot"
-          git add data/radar.db
+          git add data/radar.db docs/data.json
           git diff --staged --quiet || git commit -m "Atualiza preços [automated]"
           git push

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banzai Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F6F8FA;--surface:#FFFFFF;--surface2:#F6F8FA;--border:#D0D7DE;
+  --text:#1F2328;--muted:#656D76;--muted2:#8C959F;
+  --spike:#CF222E;--buy:#1A7F37;--info:#0969DA;--warn:#9A6700;
+  --spike-bg:#FFEBE9;--buy-bg:#DAFBE1;--info-bg:#DDF4FF;--warn-bg:#FFF8C5;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;
+}
+html,body{color-scheme:light!important;background:var(--bg)!important}
+body{color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:24px;height:52px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.logo{font-family:var(--mono);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;letter-spacing:.05em;white-space:nowrap;color:var(--text)}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--buy);flex-shrink:0}
+.nav{display:flex;gap:2px;flex:1}
+.nav-btn{padding:6px 14px;border-radius:6px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:var(--font);transition:all .15s}
+.nav-btn:hover{color:var(--text);background:var(--surface2)}
+.nav-btn.active{color:var(--text);background:var(--surface2);font-weight:600;box-shadow:inset 0 0 0 1px var(--border)}
+.game-filter{display:flex;gap:6px}
+.filter-btn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:11px;transition:all .15s}
+.filter-btn.active{border-color:var(--info);color:var(--info);background:var(--info-bg)}
+.price-floor{display:flex;align-items:center;gap:6px;padding-left:6px;border-left:1px solid var(--border);margin-left:4px}
+.price-floor label{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.price-floor input{width:52px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:11px}
+.main{padding:24px;max-width:1160px;margin:0 auto}
+.tab-content{display:none}.tab-content.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.kpi-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.kpi-value{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.hint{font-size:11px;color:var(--muted2)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);background:var(--surface2)}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td{padding:11px 16px;vertical-align:middle}
+.card-name{font-weight:500;font-size:13px}
+.card-meta{font-size:10px;color:var(--muted2);margin-top:2px}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--mono)}
+.b-op{background:#FFEBE9;color:#A8200D;border:1px solid #FFCECB}
+.b-gc{background:#DDF4FF;color:#0550AE;border:1px solid#B6E3FF}
+.price-cell{text-align:right}
+.price-now{font-family:var(--mono);font-size:13px;font-weight:700}
+.price-was{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:1px}
+.price-was span{text-decoration:line-through}
+.chg{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right}
+.chg.up{color:var(--spike)}.chg.dn{color:var(--buy)}.chg.nt{color:var(--muted)}
+.mbar-wrap{display:flex;align-items:center;gap:8px;min-width:110px}
+.mbar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:2px}
+.mnum{font-family:var(--mono);font-size:10px;color:var(--muted);width:24px;text-align:right}
+.status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.sdot{width:5px;height:5px;border-radius:50%}
+.s-spike{background:var(--spike-bg);color:var(--spike)}.s-spike .sdot{background:var(--spike)}
+.s-rising{background:var(--warn-bg);color:var(--warn)}.s-rising .sdot{background:var(--warn)}
+.s-stable{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}.s-stable .sdot{background:var(--muted2)}
+.s-falling{background:var(--buy-bg);color:var(--buy)}.s-falling .sdot{background:var(--buy)}
+.opp-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.opp-header{display:flex;align-items:center;justify-content:space-between}
+.opp-name{font-weight:600;font-size:14px;margin-bottom:3px}
+.opp-meta{font-size:11px;color:var(--muted)}
+.opp-prices{display:flex;align-items:center;gap:18px}
+.opp-price-block{text-align:right}
+.opp-price-label{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em}
+.opp-price-val{font-family:var(--mono);font-weight:700;font-size:15px}
+.opp-discount{display:inline-block;margin-top:2px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--buy-bg);color:var(--buy)}
+.empty{text-align:center;padding:48px 24px;color:var(--muted2);font-size:12px}
+.footer-note{text-align:center;padding:20px;font-size:11px;color:var(--muted2)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><div class="logo-dot"></div>BANZAI RADAR</div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('radar',this)">Radar</button>
+    <button class="nav-btn" onclick="switchTab('oportunidades',this)">Oportunidades</button>
+  </nav>
+  <div class="game-filter">
+    <button class="filter-btn active" onclick="setFilter('todos',this)">Todos</button>
+    <button class="filter-btn" onclick="setFilter('OPTCG',this)">One Piece</button>
+    <button class="filter-btn" onclick="setFilter('GCG',this)">Gundam</button>
+  </div>
+  <div class="price-floor">
+    <label>Piso $</label>
+    <input type="number" id="minPrice" value="1" min="0" step="1" onchange="render()">
+  </div>
+</div>
+
+<div class="main">
+  <div class="tab-content active" id="tab-radar">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Monitoradas</div><div class="kpi-value" id="kpiMonitored" style="color:var(--info)">–</div><div class="kpi-sub">cartas ativas</div></div>
+      <div class="kpi"><div class="kpi-label">Spikes hoje</div><div class="kpi-value" id="kpiSpikes" style="color:var(--spike)">–</div><div class="kpi-sub">acima de +20% em 24h</div></div>
+      <div class="kpi"><div class="kpi-label">Oportunidades</div><div class="kpi-value" id="kpiOpps" style="color:var(--buy)">–</div><div class="kpi-sub">low price abaixo do mercado</div></div>
+      <div class="kpi"><div class="kpi-label">Última coleta</div><div class="kpi-value" id="kpiLast" style="color:var(--warn);font-size:15px">–</div><div class="kpi-sub">horário BRT</div></div>
+    </div>
+    <div class="section-header">
+      <span class="section-title">Top movers · Maior variação de preço</span>
+      <span class="hint" id="radarHint">Carregando...</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Carta</th><th>Jogo</th><th class="r">Preço atual → 24h atrás</th>
+          <th class="r">Δ 24h</th><th class="r">Δ 7d</th><th>Momentum</th><th>Status</th>
+        </tr></thead>
+        <tbody id="radar-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-oportunidades">
+    <div class="section-header">
+      <span class="section-title">Menor preço listado vs. preço de mercado</span>
+      <span class="hint" id="oppHint"></span>
+    </div>
+    <div id="opp-list"></div>
+  </div>
+
+  <div class="footer-note" id="footerNote"></div>
+</div>
+
+<script>
+let DATA = null;
+let filter = 'todos';
+
+function gbadge(g){return g==='OPTCG'?'<span class="badge b-op">One Piece</span>':'<span class="badge b-gc">Gundam</span>';}
+function sbadge(s){
+  const m={spike:['s-spike','Spike'],rising:['s-rising','Subindo'],stable:['s-stable','Estável'],falling:['s-falling','Caindo']};
+  const[c,l]=m[s]||['s-stable','Estável'];
+  return `<span class="status ${c}"><span class="sdot"></span>${l}</span>`;
+}
+function mbar(v){
+  const col=v>=80?'var(--spike)':v>=50?'var(--warn)':v>=25?'var(--info)':'var(--muted)';
+  return `<div class="mbar-wrap"><div class="mbar-bg"><div class="mbar-fill" style="width:${v}%;background:${col}"></div></div><span class="mnum">${v}</span></div>`;
+}
+function pricecell(now,was){
+  const show = was && Math.abs(was-now)>0.001;
+  return `<div class="price-cell"><div class="price-now">$${now.toFixed(2)}</div>${show?`<div class="price-was">era <span>$${was.toFixed(2)}</span></div>`:''}</div>`;
+}
+function cc(v){return v>0?'up':v<0?'dn':'nt';}
+function fmt(v){return v>0?`+${v.toFixed(1)}%`:`${v.toFixed(1)}%`;}
+
+function render() {
+  if (!DATA) return;
+  const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+
+  document.getElementById('kpiMonitored').textContent = DATA.stats.monitored;
+  document.getElementById('kpiSpikes').textContent = DATA.stats.spikes_today;
+  document.getElementById('kpiOpps').textContent = DATA.stats.opportunities;
+  if (DATA.last_collection) {
+    const d = new Date(DATA.last_collection + 'Z');
+    document.getElementById('kpiLast').textContent = d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+
+  let radar = DATA.radar.filter(c => c.price_now >= minPrice);
+  if (filter !== 'todos') radar = radar.filter(c => c.game === filter);
+  radar = radar.slice(0, 30);
+
+  const body = document.getElementById('radar-body');
+  document.getElementById('radarHint').textContent = `${radar.length} cartas`;
+  body.innerHTML = radar.length ? radar.map(c => `
+    <tr>
+      <td><div class="card-name">${c.name}</div><div class="card-meta">${c.set_code}${c.rarity?' · '+c.rarity:''}</div></td>
+      <td>${gbadge(c.game)}</td>
+      <td>${pricecell(c.price_now, c.price_24h)}</td>
+      <td class="chg ${cc(c.change_24h)}">${fmt(c.change_24h)}</td>
+      <td class="chg ${cc(c.change_7d)}">${fmt(c.change_7d)}</td>
+      <td>${mbar(c.momentum)}</td>
+      <td>${sbadge(c.status)}</td>
+    </tr>`).join('') : '<tr><td colspan="7"><div class="empty">Nenhuma carta neste filtro.</div></td></tr>';
+
+  let opps = DATA.opportunities;
+  if (filter !== 'todos') opps = opps.filter(c => c.game === filter);
+  const oppEl = document.getElementById('opp-list');
+  document.getElementById('oppHint').textContent = `${opps.length} oportunidades`;
+  oppEl.innerHTML = opps.length ? opps.map(c => `
+    <div class="opp-card">
+      <div class="opp-header">
+        <div><div class="opp-name">${c.name}&nbsp;${gbadge(c.game)}</div><div class="opp-meta">${c.set_code}</div></div>
+        <div class="opp-prices">
+          <div class="opp-price-block"><div class="opp-price-label">Mercado</div><div class="opp-price-val">$${c.market_price.toFixed(2)}</div></div>
+          <div class="opp-price-block"><div class="opp-price-label">Menor listado</div><div class="opp-price-val" style="color:var(--buy)">$${c.low_price.toFixed(2)}</div><div class="opp-discount">−${c.discount_pct}%</div></div>
+        </div>
+      </div>
+    </div>`).join('') : '<div class="empty">Nenhuma oportunidade acima de 15% de desconto.</div>';
+}
+
+function switchTab(t, btn) {
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+fetch('data.json?t=' + Date.now())
+  .then(r => r.json())
+  .then(d => { DATA = d; render();
+    document.getElementById('footerNote').textContent = 'Atualizado automaticamente 3x/dia · Banzai Cards';
+  })
+  .catch(() => {
+    document.getElementById('radar-body').innerHTML = '<tr><td colspan="7"><div class="empty">Não foi possível carregar os dados. Tente novamente em instantes.</div></td></tr>';
+  });
+</script>
+</body>
+</html>
