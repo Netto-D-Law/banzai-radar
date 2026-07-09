@@ -2,13 +2,12 @@ name: Coleta de Preços
 
 on:
   schedule:
-    # Horários em UTC — 09:00, 15:00 e 21:00 horário de Brasília
-    - cron: "0 12 * * *"   # 09:00 BRT
-    - cron: "0 18 * * *"   # 15:00 BRT
-    - cron: "0 0 * * *"    # 21:00 BRT
-  workflow_dispatch:        # permite rodar manualmente pelo GitHub
+    # 09:17 / 15:17 / 21:17 BRT — minuto fora do topo da hora (menos fila)
+    # e fuso local via 'timezone' (ajusta horario de verao sozinho)
+    - cron: "17 9,15,21 * * *"
+      timezone: America/Sao_Paulo
+  workflow_dispatch:
 
-# Permissão necessária para o bot commitar o banco atualizado de volta
 permissions:
   contents: write
 
@@ -16,7 +15,6 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -27,19 +25,45 @@ jobs:
           python-version: "3.13"
           cache: pip
 
+      - name: Restaurar banco (Release db-latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data
+          gh release download db-latest --pattern radar.db --dir data --clobber \
+            || echo "Sem release db-latest ainda — usa o banco do repo (se houver) ou comeca novo."
+
       - name: Instalar dependências
         run: pip install -r requirements.txt
 
       - name: Executar coleta
         run: python collect.py
 
-      # Persiste o banco atualizado direto no repositório —
-      # mais confiável que cache do Actions (que pode expirar)
-      - name: Salvar banco de dados e dashboard público atualizados
+      - name: Podar histórico > 60 dias e compactar
+        run: |
+          python - <<'PY'
+          import sqlite3
+          con = sqlite3.connect("data/radar.db")
+          con.execute("DELETE FROM price_snapshots WHERE captured_at < datetime('now','-60 days')")
+          con.commit()
+          con.execute("VACUUM")
+          con.close()
+          print("Poda + VACUUM ok.")
+          PY
+
+      - name: Publicar dashboard na main (só data.json)
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Banzai Radar Bot"
-          git add data/radar.db docs/data.json
+          git add docs/data.json
           git diff --staged --quiet || git commit -m "Atualiza preços [automated]"
           git pull --rebase origin main
           git push
+
+      - name: Salvar banco na Release db-latest (fora do git)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view db-latest >/dev/null 2>&1 \
+            || gh release create db-latest --title "DB snapshot" --notes "Banco fora do git"
+          gh release upload db-latest data/radar.db --clobber
