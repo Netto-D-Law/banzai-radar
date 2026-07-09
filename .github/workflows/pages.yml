@@ -1,14 +1,16 @@
 name: Publicar Dashboard
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs/**"
+  # Publica após cada coleta concluir. Usamos workflow_run (e não
+  # 'on: push') porque o push feito pelo GITHUB_TOKEN do bot da coleta
+  # NÃO dispara workflows 'on: push' — regra anti-recursão do GitHub.
+  # Era exatamente isso que deixava o deploy sem rodar.
+  workflow_run:
+    workflows: ["Coleta de Preços"]
+    types:
+      - completed
   workflow_dispatch:
 
-# Garante que só um deploy roda por vez — cancela o anterior
-# se um novo push chegar antes de terminar (evita conflito de artefato)
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -21,6 +23,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Só publica se a coleta terminou com sucesso (ou disparo manual)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
