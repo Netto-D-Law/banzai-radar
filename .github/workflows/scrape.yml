@@ -3,7 +3,6 @@ name: Coleta de Preços
 on:
   schedule:
     # 09:17 / 15:17 / 21:17 BRT — minuto fora do topo da hora (menos fila)
-    # e fuso local via 'timezone' (ajusta horario de verao sozinho)
     - cron: "17 9,15,21 * * *"
       timezone: America/Sao_Paulo
   workflow_dispatch:
@@ -51,19 +50,19 @@ jobs:
           print("Poda + VACUUM ok.")
           PY
 
-      - name: Publicar dashboard na main (só data.json)
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "Banzai Radar Bot"
-          git add docs/data.json
-          git diff --staged --quiet || git commit -m "Atualiza preços [automated]"
-          git pull --rebase origin main
-          git push
-
-      - name: Salvar banco na Release db-latest (fora do git)
+      - name: Salvar banco na Release (primeiro — protege o histórico)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view db-latest >/dev/null 2>&1 \
             || gh release create db-latest --title "DB snapshot" --notes "Banco fora do git"
           gh release upload db-latest data/radar.db --clobber
+
+      - name: Publicar dashboard na main (só data.json)
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "Banzai Radar Bot"
+          git add docs/data.json
+          git diff --staged --quiet || git commit -m "Atualiza preços [automated]"
+          git pull --rebase --autostash origin main
+          git push
