@@ -95,7 +95,7 @@ td{padding:11px 16px;vertical-align:middle}
     <button class="filter-btn" onclick="setFilter('OPTCG',this)">One Piece</button>
     <button class="filter-btn" onclick="setFilter('GCG',this)">Gundam</button>
   </div>
-  <div class="sort-ctrl"><label>Ordenar</label><select id="sortSel" onchange="setSort(this.value)"><option value="spike">Top Spike (Δ24h)</option><option value="mom">Momentum</option><option value="price">Maior preço</option><option value="drop">Maior queda</option></select></div><div class="coll-ctrl"><label>Coleções</label><details><summary id="collSummary">Todas</summary><div id="collList" class="coll-list"></div></details></div><div class="price-floor">
+  <div class="sort-ctrl"><label>Ordenar</label><select id="sortSel" onchange="setSort(this.value)"><option value="spike">Top Spike (Δ24h)</option><option value="mom">Momentum</option><option value="price">Maior preço</option><option value="drop">Maior queda</option></select></div><div class="coll-ctrl"><label>Raridade</label><details><summary id="raritySummary">Todas</summary><div id="rarityList" class="coll-list"></div></details></div><div class="coll-ctrl"><label>Coleções</label><details><summary id="collSummary">Todas</summary><div id="collList" class="coll-list"></div></details></div><div class="price-floor">
     <label>Piso $</label>
     <input type="number" id="minPrice" value="1" min="0" step="1" onchange="render()">
   </div>
@@ -140,6 +140,7 @@ let DATA = null;
 let filter = 'todos';
     let collFilter = [];
     let sortBy = 'spike';
+    let rarityFilter = [];
 
 function gbadge(g){return g==='OPTCG'?'<span class="badge b-op">One Piece</span>':'<span class="badge b-gc">Gundam</span>';}
 function sbadge(s){
@@ -167,7 +168,18 @@ function sortRadar(list){
       return s;
     }
     function setSort(v){ sortBy = v; render(); }
-    function buildCollFilter(){
+    function buildRarityFilter(){
+  var rs = Array.from(new Set(DATA.radar.map(function(c){return c.rarity;}).filter(Boolean))).sort();
+  var html = rs.map(function(r){ var v = r.replace(/"/g,'&quot;'); return '<label class="coll-item"><input type="checkbox" value="'+v+'" onchange="toggleRarity(this)">'+r+'</label>'; }).join('');
+  document.getElementById('rarityList').innerHTML = html;
+}
+function toggleRarity(cb){
+  var v = cb.value;
+  if (cb.checked){ if(rarityFilter.indexOf(v)<0) rarityFilter.push(v); } else { rarityFilter = rarityFilter.filter(function(x){return x!==v;}); }
+  document.getElementById('raritySummary').textContent = rarityFilter.length ? (rarityFilter.length+' selecionada(s)') : 'Todas';
+  render();
+}
+function buildCollFilter(){
       var sets = Array.from(new Set(DATA.radar.map(function(c){return c.set_code;}).filter(Boolean))).sort();
       var html = sets.map(function(s){ var v = s.replace(/"/g,'&quot;'); return '<label class="coll-item"><input type="checkbox" value="'+v+'" onchange="toggleColl(this)">'+s+'</label>'; }).join('');
       document.getElementById('collList').innerHTML = html;
@@ -194,6 +206,7 @@ function sortRadar(list){
   let radar = DATA.radar.filter(c => c.price_now >= minPrice);
   if (filter !== 'todos') radar = radar.filter(c => c.game === filter);
   if (collFilter.length) radar = radar.filter(function(c){return collFilter.indexOf(c.set_code)>=0;});
+      if (rarityFilter.length) radar = radar.filter(function(c){return rarityFilter.indexOf(c.rarity)>=0;});
       radar = sortRadar(radar).slice(0, 30);
 
   const body = document.getElementById('radar-body');
@@ -241,7 +254,7 @@ function setFilter(f, btn) {
 
 fetch('data.json?t=' + Date.now())
   .then(r => r.json())
-  .then(d => { DATA = d; buildCollFilter(); render();
+  .then(d => { DATA = d; buildCollFilter(); buildRarityFilter(); render();
     document.getElementById('footerNote').textContent = 'Atualizado automaticamente 3x/dia · Banzai Cards';
   })
   .catch(() => {
