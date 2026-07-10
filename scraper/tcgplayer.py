@@ -1,7 +1,7 @@
 """
-Banzai Radar â Scraper via tcgcsv.com
-API pÃºblica que espelha o TCGPlayer diariamente.
-Zero scraping, zero autenticaÃ§Ã£o, cobre One Piece e Gundam completos.
+Banzai Radar — Scraper via tcgcsv.com
+API pública que espelha o TCGPlayer diariamente.
+Zero scraping, zero autenticação, cobre One Piece e Gundam completos.
 """
 import time
 import logging
@@ -34,7 +34,7 @@ def get_category_ids() -> dict[str, int]:
         for game_key, game_name in GAME_NAMES.items():
             if game_name in name_lower:
                 result[game_key] = cat["categoryId"]
-                log.info("  %s â categoryId %s", game_key, cat["categoryId"])
+                log.info("  %s → categoryId %s", game_key, cat["categoryId"])
     return result
 
 
@@ -46,7 +46,7 @@ def get_groups(category_id: int) -> list[dict]:
 
 def get_products_and_prices(category_id: int, group_id: int, group_name: str = "") -> list[dict]:
     """
-    Busca produtos + preÃ§os de um set e os une por productId.
+    Busca produtos + preços de um set e os une por productId.
     Filtra apenas cartas individuais (exclui sealed boxes, etc).
     """
     try:
@@ -56,16 +56,16 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
         log.warning("    Falha no grupo %s: %s", group_id, e)
         return []
 
-    # Indexa preÃ§os por productId â considera TODAS as variantes
+    # Indexa preços por productId — considera TODAS as variantes
     # (Normal, Foil, Reverse Holofoil, etc). Cartas raras/paralelas
-    # costumam ter preÃ§o APENAS em Foil, entÃ£o restringir a "Normal"
+    # costumam ter preço APENAS em Foil, então restringir a "Normal"
     # descartava justamente as cartas de maior valor.
     prices = {}
     for p in price_data.get("results", []):
         pid = p.get("productId")
         mkt = p.get("marketPrice") or 0.0
         current = prices.get(pid)
-        # MantÃ©m a variante de maior preÃ§o de mercado por carta
+        # Mantém a variante de maior preço de mercado por carta
         if current is None or mkt > current["market_price"]:
             prices[pid] = {
                 "market_price": mkt,
@@ -80,7 +80,7 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
         price = prices.get(pid, {})
         mkt   = price.get("market_price", 0.0)
 
-        # Ignora produtos sem preÃ§o de mercado vÃ¡lido
+        # Ignora produtos sem preço de mercado válido
         if mkt < 0.50:
             continue
 
@@ -93,10 +93,10 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
                 set_number = ext.get("value")
 
         # productTypeName vem sempre None nesse mirror (confirmado via teste).
-        # Sinal confiÃ¡vel: cartas tÃªm Rarity no extendedData, sealed nÃ£o tÃªm.
+        # Sinal confiável: cartas têm Rarity no extendedData, sealed não têm.
         is_card = bool(rarity)
 
-        # Cinto de seguranÃ§a: exclui por nome mesmo que rarity venha errado
+        # Cinto de segurança: exclui por nome mesmo que rarity venha errado
         name_lower = prod.get("name", "").lower()
         SEALED_KEYWORDS = ("starter deck", "booster box", "booster pack",
                            "premium booster", "collection set", "demo deck",
@@ -121,7 +121,7 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
 
     if prod_data.get("results") and not cards:
         sample = prod_data["results"][0]
-        log.warning("    â ï¸  %d produtos mas 0 passaram no filtro. Amostra bruta:", len(prod_data["results"]))
+        log.warning("    ⚠️  %d produtos mas 0 passaram no filtro. Amostra bruta:", len(prod_data["results"]))
         log.warning("        productTypeName=%r  extendedData=%r",
                     sample.get("productTypeName"), sample.get("extendedData"))
 
@@ -131,7 +131,7 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
 def scrape_all(games: list[str] = None) -> dict[str, list[dict]]:
     """
     Ponto de entrada principal.
-    Retorna {game_key: [lista de cartas com preÃ§os]}.
+    Retorna {game_key: [lista de cartas com preços]}.
     games: ['OPTCG', 'GCG'] ou None para ambos.
     """
     games = games or list(GAME_NAMES.keys())
@@ -142,7 +142,7 @@ def scrape_all(games: list[str] = None) -> dict[str, list[dict]]:
     for game in games:
         cat_id = cat_ids.get(game)
         if not cat_id:
-            log.warning("categoryId nÃ£o encontrado para %s", game)
+            log.warning("categoryId não encontrado para %s", game)
             continue
 
         log.info("Coletando %s (categoryId=%s)...", game, cat_id)
@@ -158,7 +158,7 @@ def scrape_all(games: list[str] = None) -> dict[str, list[dict]]:
             cards.extend(batch)
             time.sleep(0.4)  # respeita rate limit do tcgcsv.com
 
-        log.info("  Total %s: %d cartas com preÃ§o", game, len(cards))
+        log.info("  Total %s: %d cartas com preço", game, len(cards))
         all_results[game] = cards
 
     return all_results
