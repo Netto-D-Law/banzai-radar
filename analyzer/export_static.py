@@ -22,7 +22,7 @@ def export():
     conn.close()
 
     # Radar amplo (200 cartas, piso $1) — o dashboard filtra por jogo/preço no navegador
-    radar = get_top_movers(n=200, min_price=1.0)
+    radar = get_top_movers(n=120, min_price=1.0, game="OPTCG") + get_top_movers(n=120, min_price=1.0, game="GCG")
     opportunities = get_opportunities(min_discount_pct=15.0)
     spikes = sum(1 for c in radar if c.status == "spike")
 
