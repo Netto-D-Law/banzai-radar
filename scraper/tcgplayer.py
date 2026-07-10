@@ -71,6 +71,7 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
                 "market_price": mkt,
                 "low_price":    p.get("lowPrice") or 0.0,
                 "mid_price":    p.get("midPrice") or 0.0,
+                "high_price":   p.get("highPrice") or 0.0,
                 "sub_type":     p.get("subTypeName"),
             }
 
@@ -116,6 +117,7 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
             "market_price": mkt,
             "low_price":    price.get("low_price", 0.0),
             "mid_price":    price.get("mid_price", mkt),
+            "high_price":  price.get("high_price", 0.0),
             "tcg_url":      f"https://www.tcgplayer.com/product/{pid}",
         })
 
