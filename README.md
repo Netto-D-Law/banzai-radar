@@ -9,7 +9,7 @@
    ```
    python --version
    ```
-   Deve mostrar `Python 3.12.x`
+   Deve mostrar `Python 3.13.x`
 
 ---
 
