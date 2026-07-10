@@ -117,7 +117,7 @@ td{padding:11px 16px;vertical-align:middle}
       <table>
         <thead><tr>
           <th>Carta</th><th>Jogo</th><th class="r">Preço atual → 24h atrás</th>
-          <th class="r">Δ 24h</th><th class="r">Δ 7d</th><th>Momentum</th><th>Status</th><th class="r">Menor anúncio</th>
+          <th class="r">Δ 24h</th><th class="r">Δ 7d</th><th>Momentum</th><th>Status</th><th class="r">Menor anúncio</th><th class="r">Maior anúncio</th>
         </tr></thead>
         <tbody id="radar-body"></tbody>
       </table>
@@ -206,8 +206,8 @@ function sortRadar(list){
       <td class="chg ${cc(c.change_24h)}">${fmt(c.change_24h)}</td>
       <td class="chg ${cc(c.change_7d)}">${fmt(c.change_7d)}</td>
       <td>${mbar(c.momentum)}</td>
-      <td>${sbadge(c.status)}</td><td class="r">$${(c.low_price||0).toFixed(2)}</td>
-    </tr>`).join('') : '<tr><td colspan="8"><div class="empty">Nenhuma carta neste filtro.</div></td></tr>';
+      <td>${sbadge(c.status)}</td><td class="r">$${(c.low_price||0).toFixed(2)}</td><td class="r">$${(c.high_price||0).toFixed(2)}</td>
+    </tr>`).join('') : '<tr><td colspan="9"><div class="empty">Nenhuma carta neste filtro.</div></td></tr>';
 
   let opps = DATA.opportunities;
   if (filter !== 'todos') opps = opps.filter(c => c.game === filter);
@@ -245,7 +245,7 @@ fetch('data.json?t=' + Date.now())
     document.getElementById('footerNote').textContent = 'Atualizado automaticamente 3x/dia · Banzai Cards';
   })
   .catch(() => {
-    document.getElementById('radar-body').innerHTML = '<tr><td colspan="8"><div class="empty">Não foi possível carregar os dados. Tente novamente em instantes.</div></td></tr>';
+    document.getElementById('radar-body').innerHTML = '<tr><td colspan="9"><div class="empty">Não foi possível carregar os dados. Tente novamente em instantes.</div></td></tr>';
   });
 </script>
 </body>
