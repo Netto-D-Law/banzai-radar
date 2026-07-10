@@ -20,6 +20,7 @@ class CardAnalysis:
     momentum: int
     status: str
     low_price: float = 0.0
+    high_price: float = 0.0
 
 
 def _pct(now, before):
@@ -63,7 +64,8 @@ def get_top_movers(n: int = 20, min_price: float = 1.0, game: str = None, set_co
         SELECT
             c.id, c.name, c.set_code, c.game, c.rarity, c.tcg_url,
             ps.market_price AS price_now,
-            ps.low_price
+            ps.low_price,
+            ps.high_price
         FROM cards c
         JOIN price_snapshots ps ON ps.id = (
             SELECT id FROM price_snapshots
@@ -113,6 +115,7 @@ def get_top_movers(n: int = 20, min_price: float = 1.0, game: str = None, set_co
             momentum  = _momentum(ch24, ch7d),
             status    = _status(ch24),
             low_price = card["low_price"],
+            high_price = card["high_price"],
         ))
 
     conn.close()
