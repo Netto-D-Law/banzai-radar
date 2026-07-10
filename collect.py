@@ -1,7 +1,7 @@
 """
-Banzai Radar â Job de Coleta (auto-discovery)
+Banzai Radar — Job de Coleta (auto-discovery)
 Roda via GitHub Actions 3x/dia.
-NÃ£o precisa cadastrar cartas manualmente â descobre tudo automaticamente.
+Não precisa cadastrar cartas manualmente — descobre tudo automaticamente.
 """
 import sys, logging
 from pathlib import Path
@@ -40,7 +40,7 @@ def save_price(conn, card_id: int, card: dict):
            VALUES (?, ?, ?, ?, 'tcgcsv')""",
         (card_id, card["mid_price"], card["market_price"], card["low_price"])
     )
-    # MantÃ©m 90 dias de histÃ³rico
+    # Mantém 90 dias de histórico
     conn.execute(
         "DELETE FROM price_snapshots WHERE card_id=? AND captured_at < datetime('now','-90 days')",
         (card_id,)
@@ -48,7 +48,7 @@ def save_price(conn, card_id: int, card: dict):
 
 
 def run():
-    log.info("=== Banzai Radar â Coleta automÃ¡tica ===")
+    log.info("=== Banzai Radar — Coleta automática ===")
     init_db()
 
     results = scrape_all()  # coleta OPTCG + GCG completos
@@ -64,7 +64,7 @@ def run():
         conn.commit()
 
     conn.close()
-    log.info("=== Coleta concluÃ­da: %d snapshots salvos ===", total_saved)
+    log.info("=== Coleta concluída: %d snapshots salvos ===", total_saved)
 
     export_static()
 
