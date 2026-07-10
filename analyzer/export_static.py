@@ -40,7 +40,7 @@ def export():
                 "game": c.game, "rarity": c.rarity, "tcg_url": c.tcg_url,
                 "price_now": c.price_now, "price_24h": c.price_24h, "price_7d": c.price_7d,
                 "change_24h": c.change_24h, "change_7d": c.change_7d,
-                "momentum": c.momentum, "status": c.status,
+                "momentum": c.momentum, "status": c.status, "low_price": c.low_price,
             } for c in radar
         ],
         "opportunities": opportunities,
