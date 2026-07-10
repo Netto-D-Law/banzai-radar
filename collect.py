@@ -36,9 +36,9 @@ def upsert_card(conn, game: str, card: dict) -> int:
 
 def save_price(conn, card_id: int, card: dict):
     conn.execute(
-        """INSERT INTO price_snapshots (card_id, price, market_price, low_price, source)
-           VALUES (?, ?, ?, ?, 'tcgcsv')""",
-        (card_id, card["mid_price"], card["market_price"], card["low_price"])
+        """INSERT INTO price_snapshots (card_id, price, market_price, low_price, high_price, source)
+           VALUES (?, ?, ?, ?, ?, 'tcgcsv')""",
+        (card_id, card["mid_price"], card["market_price"], card["low_price"], card["high_price"])
     )
     # Mantém 90 dias de histórico
     conn.execute(
@@ -54,6 +54,11 @@ def run():
     results = scrape_all()  # coleta OPTCG + GCG completos
 
     conn = get_conn()
+    # migração idempotente: garante a coluna high_price (bancos restaurados da Release)
+    _cols = [r[1] for r in conn.execute("PRAGMA table_info(price_snapshots)").fetchall()]
+    if "high_price" not in _cols:
+        conn.execute("ALTER TABLE price_snapshots ADD COLUMN high_price REAL")
+        conn.commit()
     total_saved = 0
     for game, cards in results.items():
         log.info("Salvando %d cartas de %s...", len(cards), game)
