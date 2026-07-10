@@ -6,6 +6,7 @@ Zero scraping, zero autenticação, cobre One Piece e Gundam completos.
 import time
 import logging
 import requests
+import re
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +96,20 @@ def get_products_and_prices(category_id: int, group_id: int, group_name: str = "
 
         # productTypeName vem sempre None nesse mirror (confirmado via teste).
         # Sinal confiável: cartas têm Rarity no extendedData, sealed não têm.
-        is_card = bool(rarity)
+        _name = prod.get("name", "")
+        if not rarity:
+            _m = re.search(r"\((SP|SEC|LR\++|R\+|U\+|C\+|PR|SR|UC|R|C|U|P|L)\)", _name)
+            if _m:
+                rarity = _m.group(1)
+            else:
+                _low = _name.lower()
+                if "alternate art" in _low: rarity = "Alt Art"
+                elif "full art" in _low: rarity = "Full Art"
+                elif "manga" in _low: rarity = "Manga"
+                elif "parallel" in _low: rarity = "Parallel"
+                elif any(k in _low for k in ("promo", "judge pack", "winner pack", "championship", "pre-release", "tournament", "challenge")): rarity = "Promo"
+        _has_number = bool(re.search(r"[A-Z]{2,}\d*-\d{2,}|\(\d{2,4}\)", _name))
+        is_card = bool(rarity) or _has_number
 
         # Cinto de segurança: exclui por nome mesmo que rarity venha errado
         name_lower = prod.get("name", "").lower()
