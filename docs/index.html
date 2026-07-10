@@ -80,7 +80,7 @@ td{padding:11px 16px;vertical-align:middle}
 .opp-discount{display:inline-block;margin-top:2px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--buy-bg);color:var(--buy)}
 .empty{text-align:center;padding:48px 24px;color:var(--muted2);font-size:12px}
 .footer-note{text-align:center;padding:20px;font-size:11px;color:var(--muted2)}
-</style>
+.sort-ctrl,.coll-ctrl{display:flex;align-items:center;gap:6px;padding-left:6px;border-left:1px solid var(--border)}.sort-ctrl label,.coll-ctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}.sort-ctrl select{padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:Canvas;color:CanvasText;font-size:11px}.coll-ctrl details{position:relative}.coll-ctrl summary{cursor:pointer;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;list-style:none}.coll-list{position:absolute;z-index:30;top:100%;left:0;margin-top:4px;max-height:260px;overflow:auto;background:Canvas;color:CanvasText;border:1px solid var(--border);border-radius:8px;padding:6px;min-width:240px;box-shadow:0 8px 28px rgba(0,0,0,.35)}.coll-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 4px;white-space:nowrap}</style>
 </head>
 <body>
 
@@ -95,7 +95,7 @@ td{padding:11px 16px;vertical-align:middle}
     <button class="filter-btn" onclick="setFilter('OPTCG',this)">One Piece</button>
     <button class="filter-btn" onclick="setFilter('GCG',this)">Gundam</button>
   </div>
-  <div class="price-floor">
+  <div class="sort-ctrl"><label>Ordenar</label><select id="sortSel" onchange="setSort(this.value)"><option value="spike">Top Spike (Δ24h)</option><option value="mom">Momentum</option><option value="price">Maior preço</option><option value="drop">Maior queda</option></select></div><div class="coll-ctrl"><label>Coleções</label><details><summary id="collSummary">Todas</summary><div id="collList" class="coll-list"></div></details></div><div class="price-floor">
     <label>Piso $</label>
     <input type="number" id="minPrice" value="1" min="0" step="1" onchange="render()">
   </div>
@@ -104,20 +104,20 @@ td{padding:11px 16px;vertical-align:middle}
 <div class="main">
   <div class="tab-content active" id="tab-radar">
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Monitoradas</div><div class="kpi-value" id="kpiMonitored" style="color:var(--info)">–</div><div class="kpi-sub">cartas ativas</div></div>
-      <div class="kpi"><div class="kpi-label">Spikes hoje</div><div class="kpi-value" id="kpiSpikes" style="color:var(--spike)">–</div><div class="kpi-sub">acima de +20% em 24h</div></div>
-      <div class="kpi"><div class="kpi-label">Oportunidades</div><div class="kpi-value" id="kpiOpps" style="color:var(--buy)">–</div><div class="kpi-sub">low price abaixo do mercado</div></div>
-      <div class="kpi"><div class="kpi-label">Última coleta</div><div class="kpi-value" id="kpiLast" style="color:var(--warn);font-size:15px">–</div><div class="kpi-sub">horário BRT</div></div>
+      <div class="kpi"><div class="kpi-label">Monitoradas</div><div class="kpi-value" id="kpiMonitored" style="color:var(--info)">â</div><div class="kpi-sub">cartas ativas</div></div>
+      <div class="kpi"><div class="kpi-label">Spikes hoje</div><div class="kpi-value" id="kpiSpikes" style="color:var(--spike)">â</div><div class="kpi-sub">acima de +20% em 24h</div></div>
+      <div class="kpi"><div class="kpi-label">Oportunidades</div><div class="kpi-value" id="kpiOpps" style="color:var(--buy)">â</div><div class="kpi-sub">low price abaixo do mercado</div></div>
+      <div class="kpi"><div class="kpi-label">Ãltima coleta</div><div class="kpi-value" id="kpiLast" style="color:var(--warn);font-size:15px">â</div><div class="kpi-sub">horÃ¡rio BRT</div></div>
     </div>
     <div class="section-header">
-      <span class="section-title">Top movers · Maior variação de preço</span>
+      <span class="section-title">Top movers Â· Maior variaÃ§Ã£o de preÃ§o</span>
       <span class="hint" id="radarHint">Carregando...</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Carta</th><th>Jogo</th><th class="r">Preço atual → 24h atrás</th>
-          <th class="r">Δ 24h</th><th class="r">Δ 7d</th><th>Momentum</th><th>Status</th>
+          <th>Carta</th><th>Jogo</th><th class="r">PreÃ§o atual â 24h atrÃ¡s</th>
+          <th class="r">Î 24h</th><th class="r">Î 7d</th><th>Momentum</th><th>Status</th>
         </tr></thead>
         <tbody id="radar-body"></tbody>
       </table>
@@ -126,7 +126,7 @@ td{padding:11px 16px;vertical-align:middle}
 
   <div class="tab-content" id="tab-oportunidades">
     <div class="section-header">
-      <span class="section-title">Menor preço listado vs. preço de mercado</span>
+      <span class="section-title">Menor preÃ§o listado vs. preÃ§o de mercado</span>
       <span class="hint" id="oppHint"></span>
     </div>
     <div id="opp-list"></div>
@@ -138,11 +138,13 @@ td{padding:11px 16px;vertical-align:middle}
 <script>
 let DATA = null;
 let filter = 'todos';
+    let collFilter = [];
+    let sortBy = 'spike';
 
 function gbadge(g){return g==='OPTCG'?'<span class="badge b-op">One Piece</span>':'<span class="badge b-gc">Gundam</span>';}
 function sbadge(s){
-  const m={spike:['s-spike','Spike'],rising:['s-rising','Subindo'],stable:['s-stable','Estável'],falling:['s-falling','Caindo']};
-  const[c,l]=m[s]||['s-stable','Estável'];
+  const m={spike:['s-spike','Spike'],rising:['s-rising','Subindo'],stable:['s-stable','EstÃ¡vel'],falling:['s-falling','Caindo']};
+  const[c,l]=m[s]||['s-stable','EstÃ¡vel'];
   return `<span class="status ${c}"><span class="sdot"></span>${l}</span>`;
 }
 function mbar(v){
@@ -156,7 +158,28 @@ function pricecell(now,was){
 function cc(v){return v>0?'up':v<0?'dn':'nt';}
 function fmt(v){return v>0?`+${v.toFixed(1)}%`:`${v.toFixed(1)}%`;}
 
-function render() {
+function sortRadar(list){
+      var s = list.slice();
+      if (sortBy==='spike') s.sort(function(a,b){return b.change_24h-a.change_24h;});
+      else if (sortBy==='mom') s.sort(function(a,b){return b.momentum-a.momentum;});
+      else if (sortBy==='price') s.sort(function(a,b){return b.price_now-a.price_now;});
+      else if (sortBy==='drop') s.sort(function(a,b){return a.change_24h-b.change_24h;});
+      return s;
+    }
+    function setSort(v){ sortBy = v; render(); }
+    function buildCollFilter(){
+      var sets = Array.from(new Set(DATA.radar.map(function(c){return c.set_code;}).filter(Boolean))).sort();
+      var html = sets.map(function(s){ var v = s.replace(/"/g,'&quot;'); return '<label class="coll-item"><input type="checkbox" value="'+v+'" onchange="toggleColl(this)">'+s+'</label>'; }).join('');
+      document.getElementById('collList').innerHTML = html;
+    }
+    function toggleColl(cb){
+      var v = cb.value;
+      if (cb.checked){ if(collFilter.indexOf(v)<0) collFilter.push(v); } else { collFilter = collFilter.filter(function(x){return x!==v;}); }
+      document.getElementById('collSummary').textContent = collFilter.length ? (collFilter.length+' selecionada(s)') : 'Todas';
+      render();
+    }
+    
+    function render() {
   if (!DATA) return;
   const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
 
@@ -170,13 +193,14 @@ function render() {
 
   let radar = DATA.radar.filter(c => c.price_now >= minPrice);
   if (filter !== 'todos') radar = radar.filter(c => c.game === filter);
-  radar = radar.slice(0, 30);
+  if (collFilter.length) radar = radar.filter(function(c){return collFilter.indexOf(c.set_code)>=0;});
+      radar = sortRadar(radar).slice(0, 30);
 
   const body = document.getElementById('radar-body');
   document.getElementById('radarHint').textContent = `${radar.length} cartas`;
   body.innerHTML = radar.length ? radar.map(c => `
     <tr>
-      <td><div class="card-name">${c.name}</div><div class="card-meta">${c.set_code}${c.rarity?' · '+c.rarity:''}</div></td>
+      <td><div class="card-name">${c.name}</div><div class="card-meta">${c.set_code}${c.rarity?' Â· '+c.rarity:''}</div></td>
       <td>${gbadge(c.game)}</td>
       <td>${pricecell(c.price_now, c.price_24h)}</td>
       <td class="chg ${cc(c.change_24h)}">${fmt(c.change_24h)}</td>
@@ -195,7 +219,7 @@ function render() {
         <div><div class="opp-name">${c.name}&nbsp;${gbadge(c.game)}</div><div class="opp-meta">${c.set_code}</div></div>
         <div class="opp-prices">
           <div class="opp-price-block"><div class="opp-price-label">Mercado</div><div class="opp-price-val">$${c.market_price.toFixed(2)}</div></div>
-          <div class="opp-price-block"><div class="opp-price-label">Menor listado</div><div class="opp-price-val" style="color:var(--buy)">$${c.low_price.toFixed(2)}</div><div class="opp-discount">−${c.discount_pct}%</div></div>
+          <div class="opp-price-block"><div class="opp-price-label">Menor listado</div><div class="opp-price-val" style="color:var(--buy)">$${c.low_price.toFixed(2)}</div><div class="opp-discount">â${c.discount_pct}%</div></div>
         </div>
       </div>
     </div>`).join('') : '<div class="empty">Nenhuma oportunidade acima de 15% de desconto.</div>';
@@ -217,11 +241,11 @@ function setFilter(f, btn) {
 
 fetch('data.json?t=' + Date.now())
   .then(r => r.json())
-  .then(d => { DATA = d; render();
-    document.getElementById('footerNote').textContent = 'Atualizado automaticamente 3x/dia · Banzai Cards';
+  .then(d => { DATA = d; buildCollFilter(); render();
+    document.getElementById('footerNote').textContent = 'Atualizado automaticamente 3x/dia Â· Banzai Cards';
   })
   .catch(() => {
-    document.getElementById('radar-body').innerHTML = '<tr><td colspan="7"><div class="empty">Não foi possível carregar os dados. Tente novamente em instantes.</div></td></tr>';
+    document.getElementById('radar-body').innerHTML = '<tr><td colspan="7"><div class="empty">NÃ£o foi possÃ­vel carregar os dados. Tente novamente em instantes.</div></td></tr>';
   });
 </script>
 </body>
